@@ -10,8 +10,8 @@ from waflib.extras import autowaf
 # major increment <=> incompatible changes
 # minor increment <=> compatible changes (additions)
 # micro increment <=> no interface changes
-SRATOM_VERSION       = '0.6.4'
-SRATOM_MAJOR_VERSION = '0'
+SRATOM_VERSION       = '1.0.0'
+SRATOM_MAJOR_VERSION = '1'
 
 # Mandatory waf variables
 APPNAME = 'sratom'        # Package name for waf dist
@@ -26,6 +26,7 @@ post_tags    = ['Hacking', 'LAD', 'LV2', 'RDF', 'Sratom']
 
 def options(ctx):
     ctx.load('compiler_c')
+    ctx.load('compiler_cxx')
     ctx.add_flags(
         ctx.configuration_options(),
         {'static':    'build static library',
@@ -33,8 +34,10 @@ def options(ctx):
 
 def configure(conf):
     conf.load('compiler_c', cache=True)
+    conf.load('compiler_cxx', cache=True)
     conf.load('autowaf', cache=True)
     autowaf.set_c_lang(conf, 'c99')
+    autowaf.set_cxx_lang(conf, 'c++11')
 
     conf.env.BUILD_SHARED = not Options.options.no_shared
     conf.env.BUILD_STATIC = Options.options.static
@@ -43,15 +46,14 @@ def configure(conf):
         conf.fatal('Neither a shared nor a static build requested')
 
     conf.check_pkg('lv2 >= 1.16.0', uselib_store='LV2')
-    conf.check_pkg('serd-0 >= 0.30.0', uselib_store='SERD')
-    conf.check_pkg('sord-0 >= 0.14.0', uselib_store='SORD')
+    conf.check_pkg('serd-1 >= 1.0.0', uselib_store='SERD')
 
     autowaf.set_lib_env(conf, 'sratom', SRATOM_VERSION)
     conf.write_config_header('sratom_config.h', remove=False)
 
     autowaf.display_summary(conf, {'Unit tests': bool(conf.env.BUILD_TESTS)})
 
-lib_source = ['src/sratom.c']
+lib_source = ['src/forger.c', 'src/streamer.c']
 
 def build(bld):
     # C Headers
@@ -61,7 +63,7 @@ def build(bld):
     # Pkgconfig file
     autowaf.build_pc(bld, 'SRATOM', SRATOM_VERSION, SRATOM_MAJOR_VERSION, [],
                      {'SRATOM_MAJOR_VERSION' : SRATOM_MAJOR_VERSION,
-                      'SRATOM_PKG_DEPS' : 'lv2 serd-0 sord-0'})
+                      'SRATOM_PKG_DEPS' : 'lv2 serd-1'})
 
     libflags = ['-fvisibility=hidden']
     libs     = ['m']
@@ -78,7 +80,7 @@ def build(bld):
                   source          = lib_source,
                   includes        = ['.', './src'],
                   lib             = libs,
-                  uselib          = 'SERD SORD LV2',
+                  uselib          = 'SERD LV2',
                   name            = 'libsratom',
                   target          = 'sratom-%s' % SRATOM_MAJOR_VERSION,
                   vnum            = SRATOM_VERSION,
@@ -93,7 +95,7 @@ def build(bld):
                   source          = lib_source,
                   includes        = ['.', './src'],
                   lib             = libs,
-                  uselib          = 'SERD SORD LV2',
+                  uselib          = 'SERD LV2',
                   name            = 'libsratom_static',
                   target          = 'sratom-%s' % SRATOM_MAJOR_VERSION,
                   vnum            = SRATOM_VERSION,
@@ -113,7 +115,7 @@ def build(bld):
                   source       = lib_source,
                   includes     = ['.', './src'],
                   lib          = test_libs,
-                  uselib       = 'SERD SORD LV2',
+                  uselib       = 'SERD LV2',
                   name         = 'libsratom_profiled',
                   target       = 'sratom_profiled',
                   install_path = '',
@@ -127,7 +129,7 @@ def build(bld):
                   includes     = ['.', './src'],
                   use          = 'libsratom_profiled',
                   lib          = test_libs,
-                  uselib       = 'SERD SORD LV2',
+                  uselib       = 'SERD LV2',
                   target       = 'sratom_test',
                   install_path = '',
                   defines      = defines,
