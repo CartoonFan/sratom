@@ -58,7 +58,7 @@ lib_source = ['src/forger.c', 'src/streamer.c']
 def build(bld):
     # C Headers
     includedir = '${INCLUDEDIR}/sratom-%s/sratom' % SRATOM_MAJOR_VERSION
-    bld.install_files(includedir, bld.path.ant_glob('sratom/*.h'))
+    bld.install_files(includedir, bld.path.ant_glob('sratom/*.h*'))
 
     # Pkgconfig file
     autowaf.build_pc(bld, 'SRATOM', SRATOM_VERSION, SRATOM_MAJOR_VERSION, [],
@@ -131,6 +131,19 @@ def build(bld):
                   lib          = test_libs,
                   uselib       = 'SERD LV2',
                   target       = 'sratom_test',
+                  install_path = '',
+                  defines      = defines,
+                  cflags       = test_cflags,
+                  linkflags    = test_linkflags)
+
+        # C++ API init test
+        obj = bld(features     = 'cxx cxxprogram',
+                  source       = 'tests/sratom_cxx_test.cpp',
+                  includes     = ['.', './src'],
+                  use          = 'libsratom_profiled',
+                  lib          = test_libs,
+                  uselib       = 'SERD LV2',
+                  target       = 'sratom_cxx_test',
                   install_path = '',
                   defines      = defines,
                   cflags       = test_cflags,

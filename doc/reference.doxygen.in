@@ -804,6 +804,7 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = @SRATOM_SRCDIR@/sratom/sratom.h \
+                         @SRATOM_SRCDIR@/sratom/sratom.hpp \
                          @SRATOM_SRCDIR@/doc/mainpage.md
 
 # This tag can be used to specify the character encoding of the source files
