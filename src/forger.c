@@ -188,7 +188,7 @@ read_uri(ForgeContext* ctx, LV2_Atom_Forge* forge, const SerdNode* node)
 		SerdNode* rel  = serd_new_relative_uri(str, ctx->base_uri, NULL);
 		char*     path = serd_file_uri_parse(serd_node_get_string(rel), NULL);
 		lv2_atom_forge_path(forge, path, strlen(path));
-		free(path);
+		serd_free(path);
 		serd_node_free(rel);
 	} else {
 		lv2_atom_forge_urid(forge, map->map(map->handle, str));
