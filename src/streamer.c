@@ -33,26 +33,20 @@
 #define NS_RDF "http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 #define NS_XSD "http://www.w3.org/2001/XMLSchema#"
 
-#define STREAM_ERROR(msg)                                                      \
-	serd_world_logf(streamer->world,                                           \
-	                SERD_ERR_UNKNOWN,                                          \
-	                SERD_LOG_LEVEL_ERROR,                                      \
-	                NULL,                                                      \
-	                msg);
+#define STREAM_ERROR(msg) \
+	serd_world_logf(streamer->world, SERD_LOG_LEVEL_ERR, NULL, 0, msg);
 
-#define STREAM_WARN(msg)                                                       \
-	serd_world_logf(streamer->world,                                           \
-	                SERD_ERR_UNKNOWN,                                          \
-	                SERD_LOG_LEVEL_WARNING,                                    \
-	                NULL,                                                      \
-	                msg);
+#define STREAM_WARN(msg) \
+	serd_world_logf(     \
+	        streamer->world, "sratom", SERD_LOG_LEVEL_WARNING, NULL, 0, msg);
 
-#define STREAM_ERRORF(msg, ...)                                                \
-	serd_world_logf(streamer->world,                                           \
-	                SERD_ERR_UNKNOWN,                                          \
-	                SERD_LOG_LEVEL_ERROR,                                      \
-	                NULL,                                                      \
-	                msg,                                                       \
+#define STREAM_ERRORF(msg, ...)         \
+	serd_world_logf(streamer->world,    \
+	                "sratom",           \
+	                SERD_LOG_LEVEL_ERR, \
+	                NULL,               \
+	                0,                  \
+	                msg,                \
 	                __VA_ARGS__);
 
 struct SratomStreamerImpl
