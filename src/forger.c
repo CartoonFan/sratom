@@ -33,7 +33,7 @@
 #define NS_XSD "http://www.w3.org/2001/XMLSchema#"
 
 #define FORGE_ERROR(msg) \
-	serd_world_logf(forger->world, "sratom", SERD_LOG_LEVEL_ERR, NULL, 0, msg);
+	serd_world_logf(forger->world, "sratom", SERD_LOG_LEVEL_ERR, 0, NULL, msg);
 
 typedef enum { MODE_SUBJECT, MODE_BODY, MODE_SEQUENCE } ReadMode;
 

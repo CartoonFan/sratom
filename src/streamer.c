@@ -34,18 +34,18 @@
 #define NS_XSD "http://www.w3.org/2001/XMLSchema#"
 
 #define STREAM_ERROR(msg) \
-	serd_world_logf(streamer->world, SERD_LOG_LEVEL_ERR, NULL, 0, msg);
+	serd_world_logf(streamer->world, SERD_LOG_LEVEL_ERR, 0, NULL, msg);
 
 #define STREAM_WARN(msg) \
 	serd_world_logf(     \
-	        streamer->world, "sratom", SERD_LOG_LEVEL_WARNING, NULL, 0, msg);
+	        streamer->world, "sratom", SERD_LOG_LEVEL_WARNING, 0, NULL, msg);
 
 #define STREAM_ERRORF(msg, ...)         \
 	serd_world_logf(streamer->world,    \
 	                "sratom",           \
 	                SERD_LOG_LEVEL_ERR, \
-	                NULL,               \
 	                0,                  \
+	                NULL,               \
 	                msg,                \
 	                __VA_ARGS__);
 
