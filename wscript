@@ -38,7 +38,7 @@ def configure(conf):
     conf.env.BUILD_SHARED = not Options.options.no_shared
     conf.env.BUILD_STATIC = Options.options.static
 
-    if not conf.env.BUILD_SHARED and not conf.env.BUILD_STATIC:
+    if not (conf.env.BUILD_SHARED or conf.env.BUILD_STATIC):
         conf.fatal('Neither a shared nor a static build requested')
 
     if Options.options.strict:
