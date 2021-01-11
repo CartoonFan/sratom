@@ -7,7 +7,7 @@ from waflib.extras import autowaf
 # major increment <=> incompatible changes
 # minor increment <=> compatible changes (additions)
 # micro increment <=> no interface changes
-SRATOM_VERSION       = '0.6.7'
+SRATOM_VERSION       = '0.6.8'
 SRATOM_MAJOR_VERSION = '0'
 
 # Mandatory waf variables
@@ -41,6 +41,9 @@ def configure(conf):
     if not conf.env.BUILD_SHARED and not conf.env.BUILD_STATIC:
         conf.fatal('Neither a shared nor a static build requested')
 
+    if conf.env.DOCS:
+        conf.load('sphinx')
+
     if Options.options.strict:
         # Check for programs used by lint target
         conf.find_program("flake8", var="FLAKE8", mandatory=False)
@@ -63,6 +66,8 @@ def configure(conf):
                 '-Wno-float-conversion',
                 '-Wno-implicit-float-conversion',
                 '-Wno-implicit-int-conversion',
+                '-Wno-nullability-extension',
+                '-Wno-nullable-to-nonnull-conversion',
                 '-Wno-padded',
                 '-Wno-shorten-64-to-32',
                 '-Wno-sign-conversion',
@@ -76,8 +81,9 @@ def configure(conf):
     conf.check_pkg('serd-0 >= 0.30.0', uselib_store='SERD')
     conf.check_pkg('sord-0 >= 0.14.0', uselib_store='SORD')
 
-    autowaf.set_lib_env(conf, 'sratom', SRATOM_VERSION)
-    conf.write_config_header('sratom_config.h', remove=False)
+    # Set up environment for building/using as a subproject
+    autowaf.set_lib_env(conf, 'sratom', SRATOM_VERSION,
+                        include_path=str(conf.path.find_node('include')))
 
     autowaf.display_summary(conf, {'Unit tests': bool(conf.env.BUILD_TESTS)})
 
@@ -88,7 +94,7 @@ lib_source = ['src/sratom.c']
 def build(bld):
     # C Headers
     includedir = '${INCLUDEDIR}/sratom-%s/sratom' % SRATOM_MAJOR_VERSION
-    bld.install_files(includedir, bld.path.ant_glob('sratom/*.h'))
+    bld.install_files(includedir, bld.path.ant_glob('include/sratom/*.h'))
 
     # Pkgconfig file
     autowaf.build_pc(bld, 'SRATOM', SRATOM_VERSION, SRATOM_MAJOR_VERSION, [],
@@ -106,31 +112,31 @@ def build(bld):
     # Shared Library
     if bld.env.BUILD_SHARED:
         bld(features        = 'c cshlib',
-            export_includes = ['.'],
+            export_includes = ['include'],
             source          = lib_source,
-            includes        = ['.', './src'],
+            includes        = ['include'],
             lib             = libs,
             uselib          = 'SERD SORD LV2',
             name            = 'libsratom',
             target          = 'sratom-%s' % SRATOM_MAJOR_VERSION,
             vnum            = SRATOM_VERSION,
             install_path    = '${LIBDIR}',
-            defines         = defines + ['SRATOM_SHARED', 'SRATOM_INTERNAL'],
+            defines         = defines + ['SRATOM_INTERNAL'],
             cflags          = libflags)
 
     # Static library
     if bld.env.BUILD_STATIC:
         bld(features        = 'c cstlib',
-            export_includes = ['.'],
+            export_includes = ['include'],
             source          = lib_source,
-            includes        = ['.', './src'],
+            includes        = ['include'],
             lib             = libs,
             uselib          = 'SERD SORD LV2',
             name            = 'libsratom_static',
             target          = 'sratom-%s' % SRATOM_MAJOR_VERSION,
             vnum            = SRATOM_VERSION,
             install_path    = '${LIBDIR}',
-            defines         = defines + ['SRATOM_INTERNAL'])
+            defines         = defines + ['SRATOM_STATIC', 'SRATOM_INTERNAL'])
 
     if bld.env.BUILD_TESTS:
         test_libs   = libs
@@ -143,31 +149,32 @@ def build(bld):
         # Static library (for unit test code coverage)
         bld(features     = 'c cstlib',
             source       = lib_source,
-            includes     = ['.', './src'],
+            includes     = ['include'],
             lib          = test_libs,
             uselib       = 'SERD SORD LV2',
             name         = 'libsratom_profiled',
             target       = 'sratom_profiled',
             install_path = '',
-            defines      = defines + ['SRATOM_INTERNAL'],
+            defines      = defines + ['SRATOM_STATIC', 'SRATOM_INTERNAL'],
             cflags       = test_cflags,
             linkflags    = test_linkflags)
 
         # Unit test program
         bld(features     = 'c cprogram',
-            source       = 'tests/sratom_test.c',
-            includes     = ['.', './src'],
+            source       = 'test/test_sratom.c',
+            includes     = ['include'],
             use          = 'libsratom_profiled',
             lib          = test_libs,
             uselib       = 'SERD SORD LV2',
-            target       = 'sratom_test',
+            target       = 'test_sratom',
             install_path = '',
-            defines      = defines,
+            defines      = defines + ['SRATOM_STATIC'],
             cflags       = test_cflags,
             linkflags    = test_linkflags)
 
     # Documentation
-    autowaf.build_dox(bld, 'SRATOM', SRATOM_VERSION, top, out)
+    if bld.env.DOCS:
+        bld.recurse('doc/c')
 
     bld.add_post_fun(autowaf.run_ldconfig)
 
@@ -176,7 +183,7 @@ def test(tst):
     import sys
 
     with tst.group('Integration') as check:
-        check(['./sratom_test'])
+        check(['./test_sratom'])
 
 
 class LintContext(Build.BuildContext):
@@ -213,7 +220,7 @@ def lint(ctx):
 
     if "CLANG_TIDY" in ctx.env and "clang" in ctx.env.CC[0]:
         Logs.info("Running clang-tidy")
-        sources = glob.glob('src/*.c') + glob.glob('tests/*.c')
+        sources = glob.glob('src/*.c') + glob.glob('test/*.c')
         sources = list(map(os.path.abspath, sources))
         procs = []
         for source in sources:
