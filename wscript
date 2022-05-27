@@ -39,7 +39,7 @@ def configure(conf):
     conf.env.BUILD_STATIC = Options.options.static
     conf.env.SRATOM_MAJOR_VERSION = SRATOM_MAJOR_VERSION
 
-    if not conf.env.BUILD_SHARED and not conf.env.BUILD_STATIC:
+    if not (conf.env.BUILD_SHARED or conf.env.BUILD_STATIC):
         conf.fatal('Neither a shared nor a static build requested')
 
     if conf.env.DOCS:
